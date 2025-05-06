@@ -3,7 +3,12 @@ package com.example.spring_ai_tutorial.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.springframework.ai.chat.messages.SystemMessage
+import org.springframework.ai.chat.messages.UserMessage
 import org.springframework.ai.chat.model.ChatResponse
+import org.springframework.ai.chat.prompt.ChatOptions
+import org.springframework.ai.chat.prompt.Prompt
+import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.stereotype.Service
 
@@ -32,14 +37,25 @@ class ChatService(
         logger.debug { "OpenAI 챗 호출 시작 - 모델: $model" }
         try {
             // 메시지 구성
+            val messages = listOf(
+                SystemMessage(systemMessage),
+                UserMessage(userInput)
+            )
 
             // 챗 옵션 설정
+            val chatOptions = ChatOptions.builder()
+                .model(model)
+                .build()
 
             // 프롬프트 생성
+            val prompt = Prompt(messages, chatOptions)
 
             // 챗 모델 생성 및 호출
+            val chatModel = OpenAiChatModel.builder()
+                .openAiApi(openAiApi)
+                .build()
 
-            return@withContext TODO("응답 생성 로직을 작성하세요")
+            return@withContext chatModel.call(prompt)
         } catch (e: Exception) {
             logger.error(e) { "OpenAI 챗 호출 중 오류 발생: ${e.message}" }
             return@withContext null
