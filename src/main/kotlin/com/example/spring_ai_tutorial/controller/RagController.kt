@@ -147,7 +147,7 @@ class RagController(private val ragService: RagService) {
         return try {
             // 관련 문서 검색
             val relevantDocs = withContext(Dispatchers.IO) {
-                ragService.retrieve(request.query, request.maxResults ?: 5)
+                ragService.retrieve(request.query, request.maxResults)
             }
 
             // RAG 기반 응답 생성
@@ -155,7 +155,7 @@ class RagController(private val ragService: RagService) {
                 ragService.generateAnswerWithContexts(
                     request.query,
                     relevantDocs,
-                    request.model ?: "gpt-3.5-turbo"
+                    request.model
                 )
             }
 
