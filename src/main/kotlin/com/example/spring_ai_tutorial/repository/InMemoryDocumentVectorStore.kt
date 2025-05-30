@@ -6,6 +6,7 @@ import com.example.spring_ai_tutorial.domain.dto.DocumentSearchResultDto
 import com.example.spring_ai_tutorial.service.EmbeddingService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.ai.document.Document
+import org.springframework.ai.transformer.splitter.TokenTextSplitter
 import org.springframework.ai.vectorstore.SimpleVectorStore
 import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.stereotype.Repository
@@ -39,9 +40,17 @@ class InMemoryDocumentVectorStore(
         try {
             // Spring AI Document 객체 생성
             val document = Document(fileText, metadata + mapOf("id" to id))
+            val textSplitter = TokenTextSplitter.builder()
+                .withChunkSize(512)           // 원하는 청크 크기
+                .withMinChunkSizeChars(350)   // 최소 청크 크기
+                .withMinChunkLengthToEmbed(5) // 임베딩할 최소 청크 길이
+                .withMaxNumChunks(10000)      // 최대 청크 수
+                .withKeepSeparator(true)      // 구분자 유지 여부
+                .build()
+            val chunks = textSplitter.split(document)
 
-            // 벡터 스토어에 문서 추가 (내부적으로 임베딩 변환 수행)
-            vectorStore.add(listOf(document))
+            // 벡터 스토어에 문서 청크 추가 (내부적으로 임베딩 변환 수행)
+            vectorStore.add(chunks)
 
             logger.info { "문서 추가 완료 - ID: $id" }
         } catch (e: Exception) {
