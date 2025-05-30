@@ -69,7 +69,7 @@ class RagService(
      * @param model 사용할 LLM 모델명
      * @return 참고 출처가 포함된 응답
      */
-    suspend fun generateAnswerWithContexts(
+    fun generateAnswerWithContexts(
         question: String,
         relevantDocs: List<DocumentSearchResultDto>,
         model: String = "gpt-3.5-turbo"

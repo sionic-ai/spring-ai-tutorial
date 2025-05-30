@@ -42,7 +42,7 @@ class ChatController(
     @SwaggerResponse(responseCode = "400", description = "잘못된 요청")
     @SwaggerResponse(responseCode = "500", description = "서버 오류")
     @PostMapping("/query")
-    suspend fun sendMessage(
+    fun sendMessage(
         @Parameter(description = "채팅 요청 객체", required = true)
         @RequestBody request: ChatRequestDto
     ): ResponseEntity<ApiResponseDto<Map<String, Any>>> {

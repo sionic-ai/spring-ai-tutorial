@@ -9,8 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerResponse
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -45,7 +43,7 @@ class RagController(private val ragService: RagService) {
     @SwaggerResponse(responseCode = "400", description = "잘못된 요청 (빈 파일 또는 PDF가 아닌 파일)")
     @SwaggerResponse(responseCode = "500", description = "서버 오류")
     @PostMapping("/documents", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    suspend fun uploadDocument(
+    fun uploadDocument(
         @Parameter(description = "업로드할 PDF 파일", required = true)
         @RequestParam("file") file: MultipartFile
     ): ResponseEntity<ApiResponseDto<DocumentUploadResultDto>> {
@@ -66,19 +64,13 @@ class RagController(private val ragService: RagService) {
         }
 
         // File 객체 생성
-        val tempFile = withContext(Dispatchers.IO) {
-            try {
-                File.createTempFile("upload_", ".pdf").also {
-                    logger.debug { "임시 파일 생성됨: ${it.absolutePath}" }
-                    file.transferTo(it)
-                }
-            } catch (e: IOException) {
-                logger.error(e) { "임시 파일 생성 실패" }
-                return@withContext null
+        val tempFile = try {
+            File.createTempFile("upload_", ".pdf").also {
+                logger.debug { "임시 파일 생성됨: ${it.absolutePath}" }
+                file.transferTo(it)
             }
-        }
-
-        if (tempFile == null) {
+        } catch (e: IOException) {
+            logger.error(e) { "임시 파일 생성 실패" }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ApiResponseDto(success = false, error = "파일 처리 중 오류가 발생했습니다.")
             )
@@ -86,9 +78,7 @@ class RagController(private val ragService: RagService) {
 
         // 문서 처리 및 응답
         return try {
-            val documentId = withContext(Dispatchers.IO) {
-                ragService.uploadPdfFile(tempFile, file.originalFilename)
-            }
+            val documentId = ragService.uploadPdfFile(tempFile, file.originalFilename)
 
             logger.info { "문서 업로드 성공: $documentId" }
             ResponseEntity.ok(
@@ -106,11 +96,9 @@ class RagController(private val ragService: RagService) {
                 ApiResponseDto(success = false, error = "문서 처리 중 오류가 발생했습니다: ${e.message}")
             )
         } finally {
-            withContext(Dispatchers.IO) {
-                if (tempFile.exists()) {
-                    tempFile.delete()
-                    logger.debug { "임시 파일 삭제됨: ${tempFile.absolutePath}" }
-                }
+            if (tempFile.exists()) {
+                tempFile.delete()
+                logger.debug { "임시 파일 삭제됨: ${tempFile.absolutePath}" }
             }
         }
     }
@@ -130,7 +118,7 @@ class RagController(private val ragService: RagService) {
     @SwaggerResponse(responseCode = "400", description = "잘못된 요청")
     @SwaggerResponse(responseCode = "500", description = "서버 오류")
     @PostMapping("/query")
-    suspend fun queryWithRag(
+    fun queryWithRag(
         @Parameter(description = "질의 요청 객체", required = true)
         @RequestBody request: QueryRequestDto
     ): ResponseEntity<ApiResponseDto<QueryResponseDto>> {
@@ -146,18 +134,14 @@ class RagController(private val ragService: RagService) {
 
         return try {
             // 관련 문서 검색
-            val relevantDocs = withContext(Dispatchers.IO) {
-                ragService.retrieve(request.query, request.maxResults)
-            }
+            val relevantDocs = ragService.retrieve(request.query, request.maxResults)
 
             // RAG 기반 응답 생성
-            val answer = withContext(Dispatchers.IO) {
-                ragService.generateAnswerWithContexts(
-                    request.query,
-                    relevantDocs,
-                    request.model
-                )
-            }
+            val answer = ragService.generateAnswerWithContexts(
+                request.query,
+                relevantDocs,
+                request.model
+            )
 
             ResponseEntity.ok(
                 ApiResponseDto(

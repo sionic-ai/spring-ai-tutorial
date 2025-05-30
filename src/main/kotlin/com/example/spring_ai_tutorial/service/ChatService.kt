@@ -1,8 +1,6 @@
 package com.example.spring_ai_tutorial.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.ai.chat.messages.SystemMessage
 import org.springframework.ai.chat.messages.UserMessage
 import org.springframework.ai.chat.model.ChatResponse
@@ -29,11 +27,11 @@ class ChatService(
      * @param model 사용할 LLM 모델명
      * @return 챗 응답 객체, 오류 시 null
      */
-    suspend fun openAiChat(
+    fun openAiChat(
         userInput: String,
         systemMessage: String,
         model: String = "gpt-3.5-turbo"
-    ): ChatResponse? = withContext(Dispatchers.IO) {
+    ): ChatResponse? {
         logger.debug { "OpenAI 챗 호출 시작 - 모델: $model" }
         try {
             // 메시지 구성
@@ -55,10 +53,10 @@ class ChatService(
                 .openAiApi(openAiApi)
                 .build()
 
-            return@withContext chatModel.call(prompt)
+            return chatModel.call(prompt)
         } catch (e: Exception) {
             logger.error(e) { "OpenAI 챗 호출 중 오류 발생: ${e.message}" }
-            return@withContext null
+            return null
         }
     }
 }
