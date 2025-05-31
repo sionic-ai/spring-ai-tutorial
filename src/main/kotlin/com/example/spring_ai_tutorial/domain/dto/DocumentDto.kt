@@ -49,7 +49,7 @@ fun DocumentSearchResultDto.toDocumentResponseDto(): DocumentResponseDto {
     return DocumentResponseDto(
         id = this.id,
         score = this.score,
-        content = this.content.take(100) + if (this.content.length > 100) "..." else "",
+        content = this.content.take(500) + if (this.content.length > 500) "..." else "",
         metadata = this.metadata
     )
 }
