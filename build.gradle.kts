@@ -27,10 +27,6 @@ dependencies {
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-	// 코루틴 의존성
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-
 	// Spring AI 의존성
 	implementation("org.springframework.ai:spring-ai-openai-spring-boot-starter")
 
