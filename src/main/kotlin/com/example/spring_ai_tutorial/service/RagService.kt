@@ -54,7 +54,7 @@ class RagService(
      *
      * @param question 사용자 질문
      * @param maxResults 최대 검색 결과 수
-     * @return 관련도 순으로 정렬된 문서 목록
+     * @return 유사도 순으로 정렬된 문서 목록
      */
     fun retrieve(question: String, maxResults: Int): List<DocumentSearchResultDto> {
         logger.debug { "검색 시작: '$question', 최대 결과 수: $maxResults" }

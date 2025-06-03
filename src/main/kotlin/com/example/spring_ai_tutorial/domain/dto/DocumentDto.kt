@@ -20,7 +20,7 @@ data class DocumentSearchResultDto(
     @Schema(description = "문서 메타데이터")
     val metadata: Map<String, Any>,
     
-    @Schema(description = "관련도 점수")
+    @Schema(description = "유사도 점수")
     val score: Double
 )
 
@@ -32,7 +32,7 @@ data class DocumentResponseDto(
     @Schema(description = "문서 ID")
     val id: String,
 
-    @Schema(description = "관련도 점수")
+    @Schema(description = "유사도 점수")
     val score: Double,
 
     @Schema(description = "문서 내용 (일부)")
