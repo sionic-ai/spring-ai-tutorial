@@ -18,8 +18,6 @@ repositories {
 	mavenCentral()
 }
 
-extra["springAiVersion"] = "1.0.0-M6"
-
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 
@@ -31,17 +29,17 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
-	// Spring AI 의존성
-	implementation("org.springframework.ai:spring-ai-openai-spring-boot-starter")
-
-	// PDF 처리 라이브러리
-	implementation("org.apache.pdfbox:pdfbox:2.0.27")
-	
 	// Swagger/OpenAPI 의존성
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
 
 	// 로깅 라이브러리
 	implementation("io.github.oshai:kotlin-logging:6.0.3")
+
+	// WebClient 사용을 위한 의존성
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+	//MacOS M1/M2용 Netty DNS 라이브러리
+	implementation("io.netty:netty-resolver-dns-native-macos:4.2.0.Final:osx-aarch_64")
 
 	// 테스트 의존성
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -51,7 +49,6 @@ dependencies {
 
 dependencyManagement {
 	imports {
-		mavenBom("org.springframework.ai:spring-ai-bom:${property("springAiVersion")}")
 	}
 }
 

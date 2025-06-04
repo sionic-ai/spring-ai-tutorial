@@ -26,6 +26,9 @@ data class QueryRequestDto(
     @Schema(description = "사용자 질문", example = "인공지능이란 무엇인가요?")
     val query: String,
 
+    @Schema(description = "검색할 버킷 ID 목록 (선택사항)", example = "[\"bucket1\", \"bucket2\"]")
+    val bucketIds: List<String>? = null,
+
     @Schema(description = "최대 검색 결과 수", example = "3", defaultValue = "3")
     val maxResults: Int = 3,
 
