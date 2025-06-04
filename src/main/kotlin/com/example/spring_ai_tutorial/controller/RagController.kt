@@ -18,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile
 /**
  * RAG(Retrieval-Augmented Generation) API 컨트롤러
  *
- * PDF 문서 업로드 및 질의응답 기능을 제공합니다.
+ * 문서 업로드 및 질의응답 기능을 제공합니다.
  */
 @RestController
 @RequestMapping("/api/v1/rag")
@@ -27,15 +27,15 @@ class RagController(private val ragService: RagService) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * PDF 문서를 업로드하여 벡터 스토어에 저장합니다.
+     * AI Agent 에게 문서를 등록합니다.
      */
     @Operation(
-        summary = "PDF 문서 업로드",
-        description = "PDF 파일을 업로드하여 벡터 스토어에 저장합니다. 추후 질의에 활용됩니다."
+        summary = "문서 등록",
+        description = "파일이 벡터 스토어에 저장되며, 추후 질의시 컨텍스트로 활용됩니다."
     )
     @SwaggerResponse(
         responseCode = "200",
-        description = "문서 업로드 성공",
+        description = "문서 등록 요청 성공",
         content = [Content(schema = Schema(implementation = ApiResponseDto::class))]
     )
     @SwaggerResponse(responseCode = "400", description = "잘못된 요청")
@@ -48,7 +48,7 @@ class RagController(private val ragService: RagService) {
         @Parameter(description = "버킷 ID (선택사항, 기본값은 설정된 기본 버킷)")
         @RequestParam("bucketId", required = false) bucketId: String?
     ): ResponseEntity<ApiResponseDto<DocumentUploadResultDto>> {
-        logger.info { "문서 업로드 요청 받음: ${file.originalFilename}" }
+        logger.info { "문서 등록 요청 받음: ${file.originalFilename}" }
 
         // 파일 유효성 검사
         if (file.isEmpty) {
@@ -60,18 +60,18 @@ class RagController(private val ragService: RagService) {
 
         return try {
             val documentId = if (bucketId != null) {
-                ragService.uploadPdfFile(file, bucketId)
+                ragService.uploadFile(file, bucketId)
             } else {
-                ragService.uploadPdfFile(file)
+                ragService.uploadFile(file)
             }
 
-            logger.info { "문서 업로드 성공: $documentId" }
+            logger.info { "문서 등록 요청 성공: $documentId" }
             ResponseEntity.ok(
                 ApiResponseDto(
                     success = true,
                     data = DocumentUploadResultDto(
                         documentId = documentId,
-                        message = "문서가 성공적으로 업로드되었습니다."
+                        message = "문서 등록이 성공적으로 요청되었습니다."
                     )
                 )
             )

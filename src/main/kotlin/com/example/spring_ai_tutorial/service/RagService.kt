@@ -35,29 +35,28 @@ class RagService(
         .build()
 
     /**
-     * PDF 파일을 업로드하여 벡터 스토어에 추가합니다.
+     * Storm API를 통해 문서 등록을 요청합니다.
      *
-     * @param file 업로드할 PDF 파일
+     * @param file 업로드할 파일
      * @param bucketId 버킷 ID (기본값: application.properties의 설정값)
      * @param parserType 파서 타입 (기본값: "DEFAULT")
      * @param webhookUrl 웹훅 URL (선택사항)
      * @return 생성된 문서 ID
      */
-    suspend fun uploadPdfFile(
+    suspend fun uploadFile(
         file: MultipartFile,
         bucketId: String = defaultBucketId,
-        parserType: String = "STORM_PARSE", // "DEFAULT" or "STORM_PARSE"
+        parserType: String = "DEFAULT", // "DEFAULT" or "STORM_PARSE"
         webhookUrl: String? = defaultWebhookUrl,
     ): String {
-        logger.info { "PDF 파일 업로드 시작: ${file.originalFilename}, bucketId: $bucketId" }
+        logger.info { "문서 등록 요청 시작: ${file.originalFilename}, bucketId: $bucketId" }
 
         val bodyBuilder = MultipartBodyBuilder()
 
-        // 단순한 바이트 배열 사용
+        // 파일 업로드 (여러 확장자 지원)
         bodyBuilder.part("file", file.bytes)
             .headers { headers ->
-                headers.setContentDispositionFormData("file", file.originalFilename ?: "document.pdf")
-                headers.add("Content-Type", file.contentType ?: "application/pdf")
+                headers.setContentDispositionFormData("file", file.originalFilename ?: "document")
             }
         bodyBuilder.part("bucketId", bucketId)
         bodyBuilder.part("parserType", parserType)
@@ -76,23 +75,22 @@ class RagService(
 
             logger.debug { "Storm API 응답: $response" }
 
-            // 응답에서 문서 ID 추출 (Storm API 표준 응답 구조)
+            // 응답에서 documentId 추출
             val data = response["data"] as? Map<String, Any>
                 ?: throw DocumentProcessingException("응답에 data 필드가 없습니다: $response")
-
             val documentId = data["documentId"]?.toString()
                 ?: throw DocumentProcessingException("data에서 documentId를 찾을 수 없습니다: $data")
 
-            logger.info { "PDF 파일 업로드 완료: documentId=$documentId" }
+            logger.info { "문서 등록 요청 완료: documentId=$documentId" }
             documentId
 
         } catch (e: Exception) {
-            logger.error(e) { "PDF 파일 업로드 실패: ${e.message}" }
+            logger.error(e) { "문서 등록 요청 실패: ${e.message}" }
             if (e is org.springframework.web.reactive.function.client.WebClientResponseException) {
                 logger.error { "응답 상태: ${e.statusCode}" }
                 logger.error { "응답 본문: ${e.responseBodyAsString}" }
             }
-            throw DocumentProcessingException("PDF 파일 업로드 실패: ${e.message}", e)
+            throw DocumentProcessingException("문서 등록 요청 실패: ${e.message}", e)
         }
     }
 
@@ -109,7 +107,6 @@ class RagService(
     ): StormAnswerResponseDto {
         logger.info { "답변 생성 시작: question=$question, bucketIds=$bucketIds" }
         
-        // 요청 바디 구성
         val requestBody = mutableMapOf<String, Any>("question" to question)
         bucketIds?.let { requestBody["bucketIds"] = it }
 
@@ -127,10 +124,8 @@ class RagService(
             // 응답 파싱
             val data = response["data"] as? Map<String, Any>
                 ?: throw DocumentProcessingException("응답 데이터가 올바르지 않습니다")
-
             val chatData = data["chat"] as? Map<String, Any>
                 ?: throw DocumentProcessingException("채팅 데이터가 올바르지 않습니다")
-
             val contextsData = data["contexts"] as? List<Map<String, Any>>
                 ?: emptyList()
 
