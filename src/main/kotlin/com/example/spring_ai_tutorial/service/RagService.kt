@@ -24,7 +24,10 @@ class RagService(
     private val stormApiKey: String,
     
     @Value("\${storm.default.bucket.id}")
-    private val defaultBucketId: String
+    private val defaultBucketId: String,
+
+    @Value("\${webhook.url}")
+    private val defaultWebhookUrl: String? = null
 ) {
     private val logger = KotlinLogging.logger {}
     private val webClient = WebClient.builder()
@@ -43,11 +46,11 @@ class RagService(
     suspend fun uploadPdfFile(
         file: MultipartFile,
         bucketId: String = defaultBucketId,
-        parserType: String = "DEFAULT", // "DEFAULT" or "STORM_PARSE"
-        webhookUrl: String? = null,
+        parserType: String = "STORM_PARSE", // "DEFAULT" or "STORM_PARSE"
+        webhookUrl: String? = defaultWebhookUrl,
     ): String {
         logger.info { "PDF 파일 업로드 시작: ${file.originalFilename}, bucketId: $bucketId" }
-        
+
         val bodyBuilder = MultipartBodyBuilder()
 
         // 단순한 바이트 배열 사용
@@ -63,7 +66,7 @@ class RagService(
         return try {
             logger.debug { "요청 데이터: bucketId=$bucketId, parserType=$parserType, webhookUrl=$webhookUrl" }
             logger.debug { "파일 정보: name=${file.originalFilename}, size=${file.size}, contentType=${file.contentType}" }
-            
+
             val response = webClient.post()
                 .uri("/documents/by-file")
                 .header("storm-api-key", stormApiKey)
@@ -76,7 +79,7 @@ class RagService(
             // 응답에서 문서 ID 추출 (Storm API 표준 응답 구조)
             val data = response["data"] as? Map<String, Any>
                 ?: throw DocumentProcessingException("응답에 data 필드가 없습니다: $response")
-            
+
             val documentId = data["documentId"]?.toString()
                 ?: throw DocumentProcessingException("data에서 documentId를 찾을 수 없습니다: $data")
 
