@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-class OpenApiConfig {
+class OpenApiConfig {   // Swagger 문서화를 위한 설정을 담당
 
     @Bean
     fun springOpenAPI(): OpenAPI {

@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration
 class OpenAiConfig {
     private val logger = KotlinLogging.logger {}
 
-    @Value("\${spring.ai.openai.api-key}")
+    @Value("\${spring.ai.openai.api-key}")  //application.properties에서 읽어오도록
     private lateinit var apiKey: String
 
     /**

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*
  */
 @RestController
 @RequestMapping("/api/v1/chat")
-@Tag(name = "Chat API", description = "OpenAI API를 통한 채팅 기능")
+@Tag(name = "Chat API", description = "OpenAI 및 Anthropic API를 통한 채팅 기능")
 class ChatController(
     private val chatService: ChatService
 ) {
@@ -30,7 +30,7 @@ class ChatController(
      */
     @Operation(
         summary = "LLM 채팅 메시지 전송",
-        description = "사용자의 메시지를 받아 OpenAI API를 통해 응답을 생성합니다."
+        description = "사용자의 메시지를 받아 OpenAI 또는 Anthropic API를 통해 응답을 생성합니다."
     )
     @SwaggerResponse(
         responseCode = "200",
@@ -40,7 +40,7 @@ class ChatController(
     @SwaggerResponse(responseCode = "400", description = "잘못된 요청")
     @SwaggerResponse(responseCode = "500", description = "서버 오류")
     @PostMapping("/query")
-    suspend fun sendMessage(
+    suspend fun sendMessage(    //suspend 키워드 :  Kotlin를 활용하여 비동기 처리를 구현한다는 뜻 (Kotlin에서 suspend 함수는 일시 중단 가능한 함수를 의미. LLM과의 통신은 일반적으로 지연시간이 길기 때문에 어플리케이션의 응답성을 높이고자)
         @Parameter(description = "채팅 요청 객체", required = true)
         @RequestBody request: ChatRequest
     ): ResponseEntity<ApiResponse<Map<String, Any>>> {
@@ -59,18 +59,31 @@ class ChatController(
             val systemMessage = "You are a helpful AI assistant."
 
             // AI 응답 생성
-            val response = chatService.openAiChat(
-                userInput = request.query,
-                systemMessage = systemMessage,
-                model = request.model
-            )
+
+            val response = if (request.model.startsWith("claude")){
+                // Anthropic 호출 -> String 반환
+                chatService.anthropicChat(
+                    userInput = request.query,
+                    systemMessage = systemMessage,
+                    model = request.model
+                )
+            } else {
+                // 기존 OpenAPI 호출 -> ChatResponse 반환
+                chatService.openAiChat(
+                    userInput = request.query,
+                    systemMessage = systemMessage,
+                    model = request.model
+                )?.result?.output?.text
+            }
+
             logger.debug { "LLM 응답 생성: $response" }
 
-            response?.let { chatResponse ->
+            // 이제 response는 String? 타입
+            response?.let { answer ->
                 ResponseEntity.ok(
                     ApiResponse(
                         success = true,
-                        data = mapOf("answer" to chatResponse.result.output.text)
+                        data = mapOf("answer" to answer)
                     )
                 )
             } ?: run {
@@ -99,8 +112,8 @@ data class ChatRequest(
     @Schema(description = "사용자 질문", example = "안녕하세요")
     val query: String,
 
-    @Schema(description = "사용할 LLM 모델", example = "gpt-3.5-turbo", defaultValue = "gpt-3.5-turbo")
-    val model: String = "gpt-3.5-turbo"
+    @Schema(description = "사용할 LLM 모델", example = "gpt-5.1-2025-11-13", defaultValue = "gpt-5.1-2025-11-13")
+    val model: String = "gpt-5.1-2025-11-13"
 )
 
 @Schema(description = "API 응답 포맷")
